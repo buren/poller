@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Poller - Polls made easy</title>
+    <script src="js/lib/jquery.min.js"></script>
+    <script src="js/lib/highcharts.js"></script>
+    <script src="js/lib/highcharts-opts.js"></script>
+    <script src="js/lib/chartkick.js"></script>
+    <script src="../poller.js"></script>
+    <script>
+      PollerConfig = { url: 'https://throwawaypoll.herokuapp.com' };
+    </script>
+  </head>
+  <body>
+
+    <div data-poller="weather">
+      <button data-answer="Love it">Love it</button>
+      <button data-answer="Hate it">Hate it</button>
+      <button data-answer="Indifferent">Indifferent</button>
+      <div data-chart data-refresh="5"></div>
+    </div>
+
+  </body>
+</html>

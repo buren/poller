@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Poller - Polls made easy</title>
+    <link rel="stylesheet" href="css/bootstrap.min.css" charset="utf-8">
+
+    <script src="js/lib/jquery.min.js"></script>
+    <script src="js/lib/bootstrap.min.js"></script>
+    <script src="js/lib/minitest.js"></script>
+    <script src="js/lib/highcharts.js"></script>
+    <script src="js/lib/highcharts-opts.js"></script>
+    <script src="js/lib/chartkick.js"></script>
+    <script src="../poller.js"></script>
+    <script>
+      PollerConfig = { url: 'https://throwawaypoll.herokuapp.com' };
+    </script>
+  </head>
+  <body>
+
+    <div class="container">
+      <nav class="navbar navbar-light bg-faded">
+        <a class="navbar-brand" href="#">Poller</a>
+      </nav>
+      <br>
+    </div>
+
+
+    <div class="container">
+      <div class="row">
+
+        <div class="col-md-6">
+          <div class="card card-block">
+            <h4 class="card-title">Whats your name and age?</h4>
+
+            <div data-poller="person" data-points>
+              <input type="text" name="x" placeholder="Name">
+              <input type="number" name="y" placeholder="Age">
+              <button class="btn btn-primary-outline" data-submit>Submit</button>
+              <hr>
+              <div data-chart="Pie" data-refresh="4"></div>
+            </div>
+
+          </div><!-- END .card  -->
+        </div><!-- END .col-md-6 -->
+
+        <div class="col-md-6">
+          <div class="card card-block">
+            <h4 class="card-title">What do you think about the weather today?</h4>
+
+            <div data-poller="weather" data-multi>
+              <button class="btn btn-primary-outline" data-answer="Love it">Love it</button>
+              <button class="btn btn-primary-outline" data-answer="Hate it">Hate it</button>
+              <button class="btn btn-primary-outline" data-answer="Indifferent">Indifferent</button>
+              <hr>
+              <div data-chart data-refresh="4"></div>
+            </div>
+
+          </div><!-- END .card  -->
+        </div><!-- END .col-md-6  -->
+
+      </div><!-- END .row  -->
+    </div><!-- END .container  -->
+
+
+    <div class="container">
+      <div class="row">
+
+        <div class="col-md-6">
+          <div class="card card-block">
+            <h4 class="card-title">Whats your favorite currency?</h4>
+
+            <div data-poller="currency">
+              <img src="http://placehold.it/100x70&text=$" data-answer="Dollar" />
+              <img src="http://placehold.it/100x70&text=€" data-answer="Euro" />
+              <hr>
+              <div data-chart data-refresh="4"></div>
+            </div>
+
+          </div><!-- END .card  -->
+        </div><!-- END .col-md-6  -->
+
+      </div><!-- END .row  -->
+    </div><!-- END .container  -->
+
+  </body>
+</html>
