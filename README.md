@@ -1,6 +1,6 @@
 # Poller
 
-Deploy [poller-server](https://github.com/buren/poller-server), in 3 minutes, to Heroku with one click.
+Deploy [poller-server](https://github.com/buren/poller-server), in less than 2 minutes, to Heroku with one click.
 
 [Poller](https://github.com/buren/poller#getting-started), get started with a couple of lines of HTML.
 
