@@ -2,7 +2,8 @@
   'use strict';
 
   function config(key) {
-    var config = typeof window.PollerConfig === undefined ? {} : window.PollerConfig;
+    var config = window.PollerConfig === undefined ? {} : window.PollerConfig;
+    config.onReady = config.onReady === undefined ? true : config.onReady;
     return config[key];
   }
 
@@ -12,7 +13,10 @@
     // Get user config or define an empty object
     self.url = config('url'); // Server url
     if (!self.url) {
-      console.error('PollerConfig.url property must be set!');
+      var msg = 'PollerConfig.url property must be set.'
+      msg    += " Make sure you've defined PollerConfig _before_ including poller.js"
+      msg    += " Example: PollerConfig = { url: 'https://throwawaypoll.herokuapp.com' };"
+      console.error(msg);
       return;
     }
 
@@ -160,7 +164,7 @@
     }
   };
 
-  function initializePollers() {
+  function PollerDOMInit() {
     // For each HTML element with data-poller as attribute
     $.each($('[data-poller]'), function(index, element) {
       var $el = $(element);
@@ -182,11 +186,14 @@
     });
   }
 
-  // When the document is ready initialize all Pollers
-  $(document).ready(function() {
-    initializePollers();
-  });
+  if (config('onReady')) {
+    // When the document is ready initialize all Pollers
+    $(document).ready(function() {
+      PollerDOMInit();
+    });
+  }
 
   // Expose the Poller funtion to the outside world
   window.Poller = Poller;
+  window.PollerDOMInit = PollerDOMInit;
 }(window));

@@ -91,6 +91,19 @@ You don't have to have components in the same place as the questions:
 </div>
 ```
 
+PollerConfig:
+```js
+PollerConfig = {
+  url: 'https://throwawaypoll.herokuapp.com', // Server URL
+  onReady: false // Don't initialize HTML components on document ready, true by default
+}
+```
+
+Manually initialize HTMl components:
+```js
+PollerDOMInit();
+```
+
 ### JavaScript
 
 Simple poll
