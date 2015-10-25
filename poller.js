@@ -25,7 +25,7 @@
     self.multiVote = opts.multiVote || false; // Allow multi votes
     self.voted = false; // Has the user voted
 
-    self.$poll = $(self.pollSelector());
+    self.$poll = $(pollSelector(self.id));
 
     self.resultUrl = self.url + '/result?question=' + self.id + '&points=' + self.points; // Poll result url
     self.pollUrl = self.url + '/poll'; // Submit poll answer url
@@ -37,64 +37,25 @@
   Poller.prototype.init = function () {
     var self = this;
 
-    // Attach anwser click event handler
-    var attachAnswerClickEvent = function() {
-      var dataAttr = 'data-answer'; // Answer element data attribute name
-      var selector = self.pollSelector('[' + dataAttr + ']'); // Answer element selector
-      $(document).on('click', selector, function(event) {
-        event.preventDefault(); // Prevent default element action
-        var value = $(this).attr(dataAttr); // Get answer
-        // Submit the answer
-        self.submit(value, function(_json) {
-          console.log('Voted: ' + value);
-          self.dimWhenSingleVote($(selector));
-        });
+    answerEvent(self.id, function(selector, value) {
+      // Submit the answer
+      self.submit(value, function(_json) {
+        console.log('Voted: ' + value);
+        self.dimWhenSingleVote($(selector));
       });
-    };
+    });
 
-    var attachSubmitClickEvent = function() {
-      var selector = self.pollSelector('[data-submit]');
-      $(document).on('click', selector, function(event) {
-        event.preventDefault();
-        var x = self.$poll.find('[name="x"]').val();
-        var y = self.$poll.find('[name="y"]').val();
-        var answer = {x: x, y: y};
-        self.submit(answer, function(_json) {
-          console.log('Answered: ', answer);
-          self.dimWhenSingleVote($(selector));
-        });
+    pointAnswerEvent(self.id, function(selector) {
+      var x = self.$poll.find('[name="x"]').val();
+      var y = self.$poll.find('[name="y"]').val();
+      var answer = {x: x, y: y};
+      self.submit(answer, function(_json) {
+        console.log('Answered: ', answer);
+        self.dimWhenSingleVote($(selector));
       });
-    };
+    });
 
-    // Initialize the chart
-    var initPollChart = function() {
-      var $chart = $(self.pollSelector('[data-chart]'));
-      // Return if there isn't a chart element
-      if (!$chart.length > 0) {
-        return;
-      }
-      var chartType = $chart.attr('data-chart');
-      var chartId = 'chart-' + self.id; // The chart id
-      var html = '<div id="' + chartId + '"></div>'; // Chart HTML
-      var opts = {}; // Chart options
-
-      // Chart refresh option
-      var refresh = parseInt($chart.attr('data-refresh'), 10);
-      if (!isNaN(refresh)) opts.refresh = refresh*1000;
-
-      // Set chartType
-      opts.chartType = chartType;
-
-      // Set chart HTML
-      $chart.html(html);
-
-      // Initialize the chart
-      self.resultChart(chartId, opts);
-    };
-
-    attachAnswerClickEvent();
-    attachSubmitClickEvent();
-    initPollChart();
+    initChartDOM(self.id, self.resultUrl);
   };
 
   // Submit poll answer
@@ -137,26 +98,6 @@
     });
   };
 
-  // Create a chart for poll result
-  Poller.prototype.resultChart = function(id, options) {
-    var self = this;
-    var opts = options || {};
-    var chartType;
-    if (opts.chartType && opts.chartType.length > 0) {
-      chartType = opts.chartType + 'Chart';
-    } else {
-      chartType = 'ColumnChart';
-    }
-    // Initialize the chart
-    new Chartkick[chartType](id, self.resultUrl, opts);
-  };
-
-  // Build poll selectors
-  Poller.prototype.pollSelector = function(selector) {
-    var baseSelector = '[data-poller="' + this.id + '"] ';
-    return baseSelector + (selector || '');
-  };
-
   // If only allowed to vote once dim the answers
   Poller.prototype.dimWhenSingleVote = function($element) {
     if (!this.multiVote) {
@@ -164,7 +105,12 @@
     }
   };
 
-  function PollerDOMInit() {
+  function PollerDOM() {
+    var self = this;
+    self.init();
+  }
+
+  PollerDOM.prototype.init = function () {
     // For each HTML element with data-poller as attribute
     $.each($('[data-poller]'), function(index, element) {
       var $el = $(element);
@@ -184,6 +130,78 @@
       // Initialize the poll
       new Poller(options);
     });
+  };
+
+  function attachClickHandler(selector, callback) {
+    $(document).on('click', selector, function(event) {
+      event.preventDefault();
+      callback($(this));
+    });
+  }
+
+  // Attach anwser click event handler
+  function answerEvent(id, callback) {
+    var dataAttr = 'data-answer'; // Answer element data attribute name
+    var selector = pollSelector(id, '[' + dataAttr + ']'); // Answer element selector
+
+    attachClickHandler(selector, function($el) {
+      var value = $el.attr(dataAttr); // Get answer
+      callback(selector, value);
+    });
+  };
+
+  function pointAnswerEvent(id, callback) {
+    var selector = pollSelector(id, '[data-submit]');
+    attachClickHandler(selector, function() {
+      callback(selector);
+    });
+  };
+
+  function initChartDOM(id, dataSource) {
+    var $chart = $(pollSelector(id, '[data-chart]'));
+    // Return if there isn't a chart element
+    if (!$chart.length > 0) {
+      return;
+    }
+    var chartType = $chart.attr('data-chart');
+    var chartId = 'chart-' + id; // The chart id
+    var html = '<div id="' + chartId + '"></div>'; // Chart HTML
+    var opts = {}; // Chart options
+
+    // Chart refresh option
+    var refresh = parseInt($chart.attr('data-refresh'), 10);
+    if (!isNaN(refresh)) opts.refresh = refresh*1000;
+
+    // Set chartType
+    opts.chartType = chartType;
+
+    // Set chart HTML
+    $chart.html(html);
+
+    // Initialize the chart
+    createChart(chartId, dataSource, opts);
+  }
+
+  function createChart(id, dataSource, options) {
+    var opts = options || {};
+    var chartType;
+    if (opts.chartType && opts.chartType.length > 0) {
+      chartType = opts.chartType + 'Chart';
+    } else {
+      chartType = 'ColumnChart';
+    }
+    // Initialize the chart
+    new Chartkick[chartType](id, dataSource, opts);
+  }
+
+  // Build poll selectors
+  function pollSelector(id, selector) {
+    var baseSelector = '[data-poller="' + id + '"] ';
+    return baseSelector + (selector || '');
+  };
+
+  function PollerDOMInit() {
+    new PollerDOM();
   }
 
   if (config('onReady')) {
