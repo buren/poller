@@ -6,19 +6,25 @@ Deploy [poller-server](https://github.com/buren/poller-server), in less than 2 m
 
 ## Getting started
 
-Get started by including [`poller.js`](https://github.com/buren/poller/blob/master/js/poller.js) and defining the server address.
 ```html
-<script src="js/poller.js"></script>
 <script>
-  PollerConfig = { url: 'https://throwawaypoll.herokuapp.com' };
+  var yourPollerServerUrl = 'https://throwawaypoll.herokuapp.com';
+  PollerConfig = { url: yourPollerServerUrl };
 </script>
+<script src="js/poller.js"></script>
+```
+
+If you want to use the HTML integration, add
+```html
+<script src="js/poller-dom.js"></script>
 ```
 
 ## HTML
 
 Create a poll that can be answered multiple times and display a Bar chart beneath that updates every 2 seconds.
+
 ```html
-<div data-poller="weather" data-multi>
+<div data-poller="weather" data-multi-vote>
   <h3>What do you think about the weather today?</h3>
   <button data-answer="Love it">Love it</button>
   <button data-answer="Hate it">Hate it</button>
@@ -29,17 +35,22 @@ Create a poll that can be answered multiple times and display a Bar chart beneat
 
 __Answer__:
 
-Any element can be used for the answer, the only thing required is to add a `data-answer` attribute. `Poller` then listens to the elements click event.
+Any element can be used for the answer, the only thing required is to add a `data-answer` attribute. `Poller` then listens to the elements click event and will prevent default element behavior.
 
-All of the below are valid:
+All of the below are valid
 ```html
-<button data-answer="Answer">Answer</button>
-<a href="#" data-answer="Answer">Answer</a>
-<div data-answer="Answer">...</div>
-<img src="http://placehold.it/150x150" data-answer="Answer" />
+<div data-poller="rating" data-multi-vote>
+  <button data-answer="1">1</button>
+  <a href="#" data-answer="2">2</a>
+  <div data-answer="3">Three</div>
+  <img src="http://placehold.it/150x150&text=4" data-answer="4" />
+  <!-- if an elements data-answer is empty the text will be used instead -->
+  <button data-answer>5</button>
+  <div data-answer="">6</div>
+</div>
 ```
 
-Points answers (x/y):
+Points answers (x/y)
 ```html
 <!-- For x/y points: add 'data-points' attribute -->
 <div data-poller="person" data-points>
@@ -55,17 +66,17 @@ You'll need to add a `data-points` attribute to the root poller element and `dat
 
 __Chart__:
 
-Simplest example:
+Simplest example
 ```html
 <div data-chart></div>
 ```
 
-Refresh chart every 2 seconds:
+Refresh chart every 2 seconds
 ```html
 <div data-chart data-refresh="2"></div>
 ```
 
-Render as line chart:
+Render as line chart
 ```html
 <div data-chart="Line"></div>
 ```
@@ -76,53 +87,72 @@ By default it will render a Column chart.
 
 __Options__:
 
-You don't have to have components in the same place as the questions:
+You can put components together how you like
 ```html
+<!-- One answer -->
 <div data-poller="question">
   <button data-answer="Answer">Answer</button>
 </div>
 
+<!-- Another answer -->
 <div data-poller="question">
   <button data-answer="Answer 1">Answer 1</button>
 </div>
 
+<!-- Only chart -->
 <div data-poller="question">
+  <div data-chart></div>
+</div>
+
+<!-- Together -->
+<div data-poller="question">
+  <button data-answer="Answer 2">Answer 2</button>
   <div data-chart></div>
 </div>
 ```
 
+Answers put in separate a `data-poller` will each be answerable once.
+
 PollerConfig:
 ```js
+var serverUrl = 'https://throwawaypoll.herokuapp.com';
 PollerConfig = {
-  url: 'https://throwawaypoll.herokuapp.com', // Server URL
-  onReady: false // Don't initialize HTML components on document ready, true by default
-}
+  url: serverUrl,   // Required: Server URL
+  onReady: true,    // By default initialize HTML components on document ready
+  multiVote: false, // By default multiple votes is not allowed
+  voted: false      // By default the user is assumed not to have voted
+};
 ```
 
-Manually initialize HTMl components:
+Manually initialize PollerDOM components:
 ```js
-PollerDOMInit();
+PollerDOM.createAll();
 ```
 
 ### JavaScript
 
+If you don't want to use the HTML integration you can interact with the Poller server directly.
+
 Simple poll
 ```js
-var opts = {
-  id: 'my-id', // Poll id
-  multiVote: true // Allow users to cast multiple votes
-};
-var poll = new Poller(opts);
+var poller = new Poller({id: 'weather'});
 
-poll.submit('My answer'); // Submit answer
-// Submit answer and log the response
-poll.submit('My answer', function(response) {
-  console.log(response.status); // 200
-});
-
+poll.submit('First answer'); // Submit answer
+// By default only one submit is allowed, the rest will be ignored
+poll.submit('First answer'); // Ignored
 poll.result(function(result) {
-  var myAnswerCount = result['My answer']; // 2
-  console.log(myAnswerCount);
+  console.log(result['First answer']); // 1
+});
+```
+
+Multi vote poll
+```js
+var poller = new Poller({id: 'weather', multiVote: true});
+
+poll.submit('First answer'); // Submit answer
+poll.submit('First answer'); // Submit answer
+poll.result(function(result) {
+  console.log(result['First answer']); // 2
 });
 ```
 
@@ -132,14 +162,12 @@ x/y poll
 var opts = {
   id: 'person',
   points: true, // It's a x/y form
-  multiVote: true // Allow multiple votes
+  multiVote: true
 };
 var poll = new Poller(opts);
-var answer = {x: 'buren', y: 26};
-var answer1 = {x: 'constance', y: 24};
 
-poll.submit(answer);  // Submit answer
-poll.submit(answer1); // Submit answer
+poll.submit({x: 'buren', y: 26});  // Submit answer
+poll.submit({x: 'constance', y: 24}); // Submit answer
 
 // Get result
 poll.result(function(result) {
@@ -147,22 +175,9 @@ poll.result(function(result) {
 });
 ```
 
-### Server
-
-Poll result path
+Enable Debug logger
 ```js
-var type = 'weather';
-var url = 'https://throwawaypoll.herokuapp.com/polls_chart?question=' + type;
-```
-
-Poll vote path
-
-```js
-var type = 'weather';
-var url = 'https://throwawaypoll.herokuapp.com/polls'
-var urlParams = {question: weather, value: 'some value'}
-
-// https://throwawaypoll.herokuapp.com/polls?type=weather&value=Indifferent
+__POLLER__DEBUG__ = true;
 ```
 
 ## License
